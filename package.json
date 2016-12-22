@@ -24,10 +24,14 @@
     "PATENTS",
     "README.md"
   ],
+  "types": "./index.d.ts",
   "browser": {
     "react-native": false
   },
   "dependencies": {
+    "@types/jquery": "^2.0.34",
+    "@types/node": "^6.0.52",
+    "@types/underscore": "^1.7.36",
     "babel-runtime": "^6.11.6",
     "ws": "^1.0.1",
     "xmlhttprequest": "^1.7.0"
