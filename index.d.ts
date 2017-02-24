@@ -4,8 +4,6 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
 /// <reference types="node" />
-/// <reference types="jquery" />
-/// <reference types="underscore" />
 
 declare namespace Parse {
 
@@ -267,22 +265,22 @@ declare namespace Parse {
      * A class that is used to access all of the children of a many-to-many relationship.
      * Each instance of Parse.Relation is associated with a particular parent object and key.
      */
-    class Relation extends BaseObject {
+    class Relation<P> extends BaseObject {
 
-        parent: Object;
+        parent: P;
         key: string;
         targetClassName: string;
 
-        constructor(parent?: Object, key?: string);
+        constructor(parent?: P, key?: string);
 
         //Adds a Parse.Object or an array of Parse.Objects to the relation.
-        add(object: Object): void;
+        add(object: Object<any, any>): void;
 
         // Returns a Parse.Query that is limited to objects in this relation.
-        query(): Query;
+        query(): Query<any>;
 
         // Removes a Parse.Object or an array of Parse.Objects from this relation.
-        remove(object: Object): void;
+        remove(object: Object<any, any>): void;
     }
 
     /**
@@ -312,57 +310,58 @@ declare namespace Parse {
      * <p>The fundamental unit of Parse data, which implements the Backbone Model
      * interface.</p>
      */
-    class Object extends BaseObject {
+    class Object<T, ClassName> extends BaseObject {
 
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        attributes: any;
+        attributes: T;
         cid: string;
         changed: boolean;
-        className: string;
+        className: ClassName;
 
-        constructor(className?: string, options?: any);
-        constructor(attributes?: string[], options?: any);
+        constructor(className?: ClassName, options?: any);
+        constructor(attributes?: Array<keyof T>, options?: any);
 
-        static extend(className: string, protoProps?: any, classProps?: any): any;
-        static fetchAll<T>(list: Object[], options: SuccessFailureOptions): Promise<T>;
-        static fetchAllIfNeeded<T>(list: Object[], options: SuccessFailureOptions): Promise<T>;
-        static destroyAll<T>(list: Object[], options?: Object.DestroyAllOptions): Promise<T>;
-        static saveAll<T extends Object>(list: T[], options?: Object.SaveAllOptions): Promise<T[]>;
+        // static extend<N>(className: N, protoProps?: any, classProps?: any): Object<N>;
+        static fetchAll<L>(list: L, options: SuccessFailureOptions): Promise<L>;
+        static fetchAllIfNeeded<L>(list: L, options: SuccessFailureOptions): Promise<L>;
+        static destroyAll<L>(list: L, options?: Object.DestroyAllOptions): Promise<L>;
+        static saveAll<L>(list: L, options?: Object.SaveAllOptions): Promise<L>;
 
-        static registerSubclass<T extends Object>(className: string, clazz: new (options?: any) => T): void;
+        // static registerSubclass<T extends Object>(className: string, clazz: new (options?: any) => T): void;
 
         initialize(): void;
-        add(attr: string, item: any): Object;
+        add(attr: keyof T, item: any): this;
         addUnique(attr: string, item: any): any;
-        change(options: any): Object;
+        change(options: any): this;
         changedAttributes(diff: any): boolean;
         clear(options: any): any;
-        clone(): Object;
+        clone(): this;
         destroy<T>(options?: Object.DestroyOptions): Promise<T>;
-        dirty(attr: String): boolean;
-        dirtyKeys(): string[];
-        escape(attr: string): string;
+        dirty(attr: keyof T): boolean;
+        dirtyKeys(): keyof T[];
+        escape(attr: keyof T): string;
         existed(): boolean;
-        fetch<T extends Object>(options?: Object.FetchOptions): Promise<T>;
-        get(attr: string): any;
+        fetch(options?: Object.FetchOptions): this;
+        get<K extends keyof T>(attr: K): T[K];
         getACL(): ACL;
-        has(attr: string): boolean;
-        hasChanged(attr: string): boolean;
-        increment(attr: string, amount?: number): any;
+        has(attr: keyof T): boolean;
+        hasChanged(attr: keyof T): boolean;
+        increment(attr: keyof T, amount?: number): any;
         isValid(): boolean;
         op(attr: string): any;
         previous(attr: string): any;
         previousAttributes(): any;
-        relation(attr: string): Relation;
+        relation(attr: string): Relation<T>;
         remove(attr: string, item: any): any;
-        save<T extends Object>(attrs?: { [key: string]: any }, options?: Object.SaveOptions): Promise<T>;
-        save<T extends Object>(key: string, value: any, options?: Object.SaveOptions): Promise<T>;
-        set(key: string, value: any, options?: Object.SetOptions): boolean;
+        save(attrs?: Partial<T>, options?: Object.SaveOptions): Promise<this>;
+        save(key: string, value: any, options?: Object.SaveOptions): Promise<this>;
+        set<K extends keyof T>(key: K, value:T[K], options?: Object.SetOptions): boolean;
+        set(attrs?: Partial<T>): this;
         setACL(acl: ACL, options?: SuccessFailureOptions): boolean;
-        unset(attr: string, options?: any): any;
-        validate(attrs: any, options?: SuccessFailureOptions): boolean;
+        unset(attr: keyof T, options?: any): any;
+        validate(attrs: keyof T[], options?: SuccessFailureOptions): boolean;
     }
 
     namespace Object {
@@ -385,7 +384,7 @@ declare namespace Parse {
      * Every Parse application installed on a device registered for
      * push notifications has an associated Installation object.
      */
-    class Installation extends Object {
+    class Installation extends Object<{}, 'Installation'> {
 
         badge: any;
         channels: string[];
@@ -399,119 +398,6 @@ declare namespace Parse {
         appVersion: string;
         parseVersion: string;
         appIdentifier: string;
-
-    }
-
-    /**
-     * Creates a new instance with the given models and options.  Typically, you
-     * will not call this method directly, but will instead make a subclass using
-     * <code>Parse.Collection.extend</code>.
-     *
-     * @param {Array} models An array of instances of <code>Parse.Object</code>.
-     *
-     * @param {Object} options An optional object with Backbone-style options.
-     * Valid options are:<ul>
-     *   <li>model: The Parse.Object subclass that this collection contains.
-     *   <li>query: An instance of Parse.Query to use when fetching items.
-     *   <li>comparator: A string property name or function to sort by.
-     * </ul>
-     *
-     * @see Parse.Collection.extend
-     *
-     * @class
-     *
-     * <p>Provides a standard collection class for our sets of models, ordered
-     * or unordered.  For more information, see the
-     * <a href="http://documentcloud.github.com/backbone/#Collection">Backbone
-     * documentation</a>.</p>
-     */
-    class Collection<T> extends Events implements IBaseObject {
-
-        model: Object;
-        models: Object[];
-        query: Query;
-        comparator: (object: Object) => any;
-
-        constructor(models?: Object[], options?: Collection.Options);
-        static extend(instanceProps: any, classProps: any): any;
-
-        initialize(): void;
-        add(models: any[], options?: Collection.AddOptions): Collection<T>;
-        at(index: number): Object;
-        chain(): _._Chain<Collection<T>>;
-        fetch(options?: Collection.FetchOptions): Promise<T>;
-        create(model: Object, options?: Collection.CreateOptions): Object;
-        get(id: string): Object;
-        getByCid(cid: any): any;
-        pluck(attr: string): any[];
-        remove(model: any, options?: Collection.RemoveOptions): Collection<T>;
-        remove(models: any[], options?: Collection.RemoveOptions): Collection<T>;
-        reset(models: any[], options?: Collection.ResetOptions): Collection<T>;
-        sort(options?: Collection.SortOptions): Collection<T>;
-        toJSON(): any;
-    }
-
-    namespace Collection {
-        interface Options {
-            model?: Object;
-            query?: Query;
-            comparator?: string;
-        }
-
-        interface AddOptions extends SilentOption {
-            /**
-             * The index at which to add the models.
-             */
-            at?: number;
-        }
-
-        interface CreateOptions extends SuccessFailureOptions, WaitOption, SilentOption, ScopeOptions {
-        }
-
-        interface FetchOptions extends SuccessFailureOptions, SilentOption, ScopeOptions { }
-
-        interface RemoveOptions extends SilentOption { }
-
-        interface ResetOptions extends SilentOption { }
-
-        interface SortOptions extends SilentOption { }
-    }
-
-    /**
-     * @class
-     *
-     * <p>Parse.Events is a fork of Backbone's Events module, provided for your
-     * convenience.</p>
-     *
-     * <p>A module that can be mixed in to any object in order to provide
-     * it with custom events. You may bind callback functions to an event
-     * with `on`, or remove these functions with `off`.
-     * Triggering an event fires all callbacks in the order that `on` was
-     * called.
-     *
-     * <pre>
-     *     var object = {};
-     *     _.extend(object, Parse.Events);
-     *     object.on('expand', function(){ alert('expanded'); });
-     *     object.trigger('expand');</pre></p>
-     *
-     * <p>For more information, see the
-     * <a href="http://documentcloud.github.com/backbone/#Events">Backbone
-     * documentation</a>.</p>
-     */
-    class Events {
-
-        static off(events: string[], callback?: Function, context?: any): Events;
-        static on(events: string[], callback?: Function, context?: any): Events;
-        static trigger(events: string[]): Events;
-        static bind(): Events;
-        static unbind(): Events;
-
-        on(eventName: string, callback?: Function, context?: any): Events;
-        off(eventName?: string, callback?: Function, context?: any): Events;
-        trigger(eventName: string, ...args: any[]): Events;
-        bind(eventName: string, callback: Function, context?: any): Events;
-        unbind(eventName?: string, callback?: Function, context?: any): Events;
 
     }
 
@@ -571,58 +457,58 @@ declare namespace Parse {
      *   }
      * });</pre></p>
      */
-    class Query extends BaseObject {
+    class Query<T extends Object<{}, ''>> extends BaseObject {
 
         objectClass: any;
         className: string;
 
-        constructor(objectClass: any);
+        constructor(objectClass: T);
 
-        static or(...var_args: Query[]): Query;
+        static or<T>(...var_args: Query<any>[]): Query<any>;
 
-        addAscending(key: string): Query;
-        addAscending(key: string[]): Query;
-        addDescending(key: string): Query;
-        addDescending(key: string[]): Query;
-        ascending(key: string): Query;
-        ascending(key: string[]): Query;
-        collection(items?: Object[], options?: Collection.Options): Collection<Object>;
-        containedIn(key: string, values: any[]): Query;
-        contains(key: string, substring: string): Query;
-        containsAll(key: string, values: any[]): Query;
-        count<T>(options?: Query.CountOptions): Promise<T>;
-        descending(key: string): Query;
-        descending(key: string[]): Query;
-        doesNotExist(key: string): Query;
-        doesNotMatchKeyInQuery(key: string, queryKey: string, query: Query): Query;
-        doesNotMatchQuery(key: string, query: Query): Query;
+        addAscending(key: keyof T): this;
+        addAscending(key: Array<keyof T>): this;
+        addDescending(key: keyof T): this;
+        addDescending(key: Array<keyof T>): this;
+        ascending(key: keyof T): this;
+        ascending(key: Array<keyof T>): this;
+        // collection(items?: Object[], options?: Collection.Options): Collection<Object>;
+        containedIn<K extends keyof T>(key: K, values: T[K][]): this;
+        contains(key: keyof T, substring: string): this;
+        containsAll(key: keyof T, values: any[]): this;
+        count(options?: Query.CountOptions): Promise<number>;
+        descending(key: keyof T): this;
+        descending(key: Array<keyof T>): this;
+        doesNotExist(key: keyof T): this;
+        doesNotMatchKeyInQuery(key: keyof T, queryKey: string, query: Query<any>): this;
+        doesNotMatchQuery(key: keyof T, query: Query<any>): this;
         each<T>(callback: Function, options?: Query.EachOptions): Promise<T>;
-        endsWith(key: string, suffix: string): Query;
-        equalTo(key: string, value: any): Query;
-        exists(key: string): Query;
-        find<T extends Object>(options?: Query.FindOptions): Promise<T[]>;
-        first<T>(options?: Query.FirstOptions): Promise<T>;
-        get(objectId: string, options?: Query.GetOptions): Promise<any>;
-        greaterThan(key: string, value: any): Query;
-        greaterThanOrEqualTo(key: string, value: any): Query;
-        include(key: string): Query;
-        include(keys: string[]): Query;
-        lessThan(key: string, value: any): Query;
-        lessThanOrEqualTo(key: string, value: any): Query;
-        limit(n: number): Query;
-        matches(key: string, regex: RegExp, modifiers: any): Query;
-        matchesKeyInQuery(key: string, queryKey: string, query: Query): Query;
-        matchesQuery(key: string, query: Query): Query;
-        near(key: string, point: GeoPoint): Query;
-        notContainedIn(key: string, values: any[]): Query;
-        notEqualTo(key: string, value: any): Query;
-        select(...keys: string[]): Query;
-        skip(n: number): Query;
-        startsWith(key: string, prefix: string): Query;
-        withinGeoBox(key: string, southwest: GeoPoint, northeast: GeoPoint): Query;
-        withinKilometers(key: string, point: GeoPoint, maxDistance: number): Query;
-        withinMiles(key: string, point: GeoPoint, maxDistance: number): Query;
-        withinRadians(key: string, point: GeoPoint, maxDistance: number): Query;
+        endsWith(key: keyof T, suffix: string): this;
+        equalTo(key: keyof T, value: any): this;
+        exists(key: keyof T): this;
+        find(options?: Query.FindOptions): Promise<T[]>;
+        first(options?: Query.FirstOptions): Promise<T>;
+        get(objectId: string, options?: Query.GetOptions): Promise<T>;
+        greaterThan(key: keyof T, value: any): this;
+        greaterThanOrEqualTo(key: keyof T, value: any): this;
+        include(key: keyof T): this;
+        include(keys: Array<keyof T>): this;
+        lessThan(key: keyof T, value: any): this;
+        lessThanOrEqualTo(key: keyof T, value: any): this;
+        limit(n: number): this;
+        matches(key: keyof T, regex: RegExp, modifiers: any): this;
+        matchesKeyInQuery(key: keyof T, queryKey: string, query: Query<any>): this;
+        matchesQuery(key: keyof T, query: Query<any>): this;
+        near(key: keyof T, point: GeoPoint): this;
+        notContainedIn(key: keyof T, values: any[]): this;
+        notEqualTo(key: keyof T, value: any): this;
+        select(...keys: Array<keyof T>): this;
+        skip(n: number): this;
+        startsWith(key: keyof T, prefix: string): this;
+        withinGeoBox(key: keyof T, southwest: GeoPoint, northeast: GeoPoint): this;
+        withinKilometers(key: keyof T, point: GeoPoint, maxDistance: number): this;
+        withinMiles(key: keyof T, point: GeoPoint, maxDistance: number): this;
+        withinRadians(key: keyof T, point: GeoPoint, maxDistance: number): this;
     }
 
     namespace Query {
@@ -646,17 +532,17 @@ declare namespace Parse {
      * A Parse.Role is a local representation of a role persisted to the Parse
      * cloud.
      */
-    class Role extends Object {
+    class Role extends Object<{}, 'Role'> {
 
         constructor(name: string, acl: ACL);
 
-        getRoles(): Relation;
-        getUsers(): Relation;
+        getRoles(): Relation<Role>;
+        getUsers(): Relation<Role>;
         getName(): string;
         setName(name: string, options?: SuccessFailureOptions): any;
     }
 
-    class Config extends Object {
+    class Config extends Object<{}, 'Config>'> {
         static get(options?: SuccessFailureOptions): Promise<Config>;
         static current(): Config;
 
@@ -664,49 +550,11 @@ declare namespace Parse {
         escape(attr: string): any;
     }
 
-    class Session extends Object {
+    class Session extends Object<{}, 'Subject'> {
         static current(): Promise<Session>;
 
         getSessionToken(): string;
         isCurrentSessionRevocable(): boolean;
-    }
-
-    /**
-     * Routers map faux-URLs to actions, and fire events when routes are
-     * matched. Creating a new one sets its `routes` hash, if not set statically.
-     * @class
-     *
-     * <p>A fork of Backbone.Router, provided for your convenience.
-     * For more information, see the
-     * <a href="http://documentcloud.github.com/backbone/#Router">Backbone
-     * documentation</a>.</p>
-     * <p><strong><em>Available in the client SDK only.</em></strong></p>
-     */
-    class Router extends Events {
-
-        routes: Router.RouteMap;
-
-        constructor(options?: Router.Options);
-        static extend(instanceProps: any, classProps: any): any;
-
-        initialize(): void;
-        navigate(fragment: string, options?: Router.NavigateOptions): Router;
-        navigate(fragment: string, trigger?: boolean): Router;
-        route(route: string, name: string, callback: Function): Router;
-    }
-
-    namespace Router {
-        interface Options {
-            routes: RouteMap;
-        }
-
-        interface RouteMap {
-            [url: string]: string;
-        }
-
-        interface NavigateOptions {
-            trigger?: boolean;
-        }
     }
 
     /**
@@ -718,7 +566,7 @@ declare namespace Parse {
      * user specific methods, like authentication, signing up, and validation of
      * uniqueness.</p>
      */
-    class User extends Object {
+    class User extends Object<{}, 'User'> {
 
         static current(): User;
         static signUp<T>(username: string, password: string, attrs: any, options?: SuccessFailureOptions): Promise<T>;
@@ -742,61 +590,6 @@ declare namespace Parse {
 
         setPassword(password: string, options?: SuccessFailureOptions): boolean;
         getSessionToken(): string;
-    }
-
-    /**
-     * Creating a Parse.View creates its initial element outside of the DOM,
-     * if an existing element is not provided...
-     * @class
-     *
-     * <p>A fork of Backbone.View, provided for your convenience.  If you use this
-     * class, you must also include jQuery, or another library that provides a
-     * jQuery-compatible $ function.  For more information, see the
-     * <a href="http://documentcloud.github.com/backbone/#View">Backbone
-     * documentation</a>.</p>
-     * <p><strong><em>Available in the client SDK only.</em></strong></p>
-     */
-    class View<T> extends Events {
-
-        model: any;
-        collection: any;
-        id: string;
-        cid: string;
-        className: string;
-        tagName: string;
-        el: any;
-        $el: JQuery;
-        attributes: any;
-
-        constructor(options?: View.Options);
-
-        static extend(properties: any, classProperties?: any): any;
-
-        $(selector?: string): JQuery;
-        setElement(element: HTMLElement, delegate?: boolean): View<T>;
-        setElement(element: JQuery, delegate?: boolean): View<T>;
-        render(): View<T>;
-        remove(): View<T>;
-        make(tagName: any, attributes?: View.Attribute[], content?: any): any;
-        delegateEvents(events?: any): any;
-        undelegateEvents(): any;
-
-    }
-
-    namespace View {
-        interface Options {
-            model?: any;
-            collection?: any;
-            el?: any;
-            id?: string;
-            className?: string;
-            tagName?: string;
-            attributes?: Attribute[];
-        }
-
-        interface Attribute {
-            [attributeName: string]: string | number | boolean;
-        }
     }
 
     namespace Analytics {
@@ -874,7 +667,7 @@ declare namespace Parse {
         }
 
         interface SaveRequest extends FunctionRequest {
-            object: Object;
+            object: Object<any, any>;
         }
 
         interface AfterSaveRequest extends SaveRequest {}
@@ -911,7 +704,7 @@ declare namespace Parse {
              * You can also set this to a Buffer object to send raw bytes.
              * If you use a Buffer, you should also set the Content-Type header explicitly to describe what these bytes represent.
              */
-            body?: string | Buffer | Object;
+            body?: string | Buffer | Object<any, any>;
             /**
              * Defaults to 'false'.
              */
@@ -1038,8 +831,8 @@ declare namespace Parse {
         }
 
         interface Relation extends IBaseObject {
-            added(): Object[];
-            removed: Object[];
+            added(): Object<any, any>[];
+            removed: Object<any, any>[];
         }
 
         interface Set extends IBaseObject {
@@ -1064,7 +857,7 @@ declare namespace Parse {
             push_time?: Date;
             expiration_time?: Date;
             expiration_interval?: number;
-            where?: Query;
+            where?: Query<any>;
             data?: any;
             alert?: string;
             badge?: string;
